@@ -17,7 +17,6 @@ MAX_RETRIES = 5
 RETRY_DELAY = 3
 
 STATUS_LABELS = {
-    7: "Em Uso (kit)",
     6: "Descartado",
     5: "Defeito",
     4: "Em Uso",
@@ -194,7 +193,7 @@ def ler_arquivo_csv(caminho_csv):
     return usuarios
 
 def main():
-    caminho_csv = "./history/ativos.csv"
+    caminho_csv = "./history/ativos31-10-2024.csv"
     usuarios_ativos = ler_arquivo_csv(caminho_csv)
     for user, ativos in usuarios_ativos.items():
         processar_ativos_para_usuario(user, ativos)
