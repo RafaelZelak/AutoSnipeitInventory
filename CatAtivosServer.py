@@ -12,8 +12,6 @@ base_path = r'\\webmin\netlogon\ServidorDeArquivos'
 
 output_file = 'ativosCatch.csv'
 
-data = []
-
 logging.info("Iniciando a verificação nas pastas diretas dentro de %s", base_path)
 
 for dir_name in os.listdir(base_path):
