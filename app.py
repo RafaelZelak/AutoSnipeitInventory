@@ -87,7 +87,7 @@ def verificar_usuario_ativo(asset_id):
     if response.status_code == 200:
         data = response.json()
 
-        assigned_user = data.get('assigned_to', None)
+        assigned_user = data.get('assigned_to', None)  # Pode ser None
         asset_tag = data.get('asset_tag', 'Tag desconhecida')  # Obtém a tag do ativo
 
         # Acessa o campo correto para status
@@ -96,11 +96,17 @@ def verificar_usuario_ativo(asset_id):
         status = STATUS_LABELS.get(status_id, status_info.get('name', "Desconhecido"))  # Verifica o nome
 
         if assigned_user:
-            print(f"Ativo {asset_tag} está com {assigned_user['username']}, Status: {status}")
+            # Verifica se o campo 'username' existe no assigned_user
+            if 'username' in assigned_user:
+                print(f"Ativo {asset_tag} está com {assigned_user['username']}, Status: {status}")
+                return assigned_user, status
+            else:
+                # Loga o erro e retorna o ativo com o problema
+                print(f"Erro: 'username' não encontrado no assigned_user para o ativo {asset_tag}. Dados retornados: {assigned_user}")
+                return None, status
         else:
             print(f"Ativo {asset_tag} não está atribuído a ninguém. Status: {status}")
-
-        return assigned_user, status
+            return None, status
     else:
         print(f"Erro ao verificar o ativo {asset_id}: {response.status_code}, {response.text}")
         return None, None
@@ -144,12 +150,15 @@ def processar_ativos_para_usuario(username, ativos):
             asset_id = obter_id_ativo(ativo)
             if asset_id:
                 current_user, current_status = verificar_usuario_ativo(asset_id)
-                if current_user:
+
+                # Remove qualquer entidade atribuída e coloca o ativo no estoque
+                if current_user or current_status != "Estoque":
                     if checkin_ativo(asset_id):
                         asset_tag = obter_tag_ativo(asset_id)
-                        print(f"Ativo {asset_tag} que estava com {current_user['username']} foi passado para o estoque.")
+                        print(f"Ativo {asset_tag} foi movido para o estoque.")
                 else:
-                    print(f"Ativo {ativo} já estava no status {current_status}.")
+                    asset_tag = obter_tag_ativo(asset_id)
+                    print(f"Ativo {asset_tag} já estava no status Estoque.")
     else:
         user_id = obter_id_usuario(username)
         if user_id:
@@ -158,7 +167,7 @@ def processar_ativos_para_usuario(username, ativos):
                 if asset_id:
                     current_user, current_status = verificar_usuario_ativo(asset_id)
                     if current_user:
-                        if current_user['id'] != user_id:
+                        if current_user.get('id') != user_id:
                             if checkin_ativo(asset_id):
                                 asset_tag = obter_tag_ativo(asset_id)
                                 print(f"Ativo {asset_tag} que estava com {current_user['username']} foi passado para {username}.")
@@ -193,7 +202,7 @@ def ler_arquivo_csv(caminho_csv):
     return usuarios
 
 def main():
-    caminho_csv = "./history/ativos25-11-2024.csv"
+    caminho_csv = "./history/ativos30-12-2024.csv"
     usuarios_ativos = ler_arquivo_csv(caminho_csv)
     for user, ativos in usuarios_ativos.items():
         processar_ativos_para_usuario(user, ativos)
